@@ -21,6 +21,6 @@ compatible) http://docs.python.org/2/library/socketserver.html
 # References:
 # 1. Understanding the use of urlparse : https://docs.python.org/3/library/urllib.parse.html 
 # 2. Understood the format of GET request from Lab-2 client.py.
-# 3. Understood the format of query params from : https://www.branch.io/glossary/query-parameters/#:~:text=Query%20parameters%20are%20a%20defined,immediately%20by%20a%20query%20parameter.
+# 3. Understood the usage of urlencode from the link provided and used that to encode args in the case of GET and POST: https://stackoverflow.com/questions/5607551/how-to-urlencode-a-querystring-in-python
 # 4. Understood the format of POST request from : https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST
 

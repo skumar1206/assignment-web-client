@@ -99,13 +99,10 @@ class HTTPClient(object):
             get_req = "GET {} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n".format(path, host)
         #handling query params and generating get request
         else:
-            string_args="?"
             # Reference 3
-            for key in args:
-                string_args = string_args + key + "=" + args[key] + "&"
-            arguments = string_args[:-1]
+            string_args = "?" + urlencode(args)
             # Reference 2
-            get_req = "GET {}{} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n".format(path, arguments, host)
+            get_req = "GET {}{} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n".format(path, string_args, host)
         #sending get_req message through socket
         self.sendall(get_req)
         socket = self.socket
@@ -139,6 +136,7 @@ class HTTPClient(object):
             post_req = "POST {} HTTP/1.1\r\nHost: {}\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".format(path, host)
         #when we have the post request body in args, generating post request with it
         else:
+            # Reference 3
             string_args = urlencode(args)
             len_args = len(string_args)
             # Reference 4
