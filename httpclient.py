@@ -22,7 +22,8 @@ import sys
 import socket
 import re
 # you may use urllib to encode data appropriately
-import urllib.parse
+from urllib.parse import urlparse
+from urllib.parse import urlencode
 
 def help():
     print("httpclient.py [GET/POST] [URL]\n")
@@ -40,14 +41,24 @@ class HTTPClient(object):
         self.socket.connect((host, port))
         return None
 
+    #get the code from the server message and return it as an int
     def get_code(self, data):
-        return None
+        split_data = data.split(" ")
+        code = split_data[1]
+        return int(code)
 
+    #get the headers from the server message and return them
     def get_headers(self,data):
-        return None
+        split_data = data.split("\r\n\r\n")
+        mod_data = split_data[0].split("\r\n")
+        headers = mod_data[2]
+        return headers
 
+    #get the body from the server message and return it
     def get_body(self, data):
-        return None
+        split_data = data.split("\r\n\r\n")
+        body = split_data[1]
+        return body
     
     def sendall(self, data):
         self.socket.sendall(data.encode('utf-8'))
@@ -68,13 +79,80 @@ class HTTPClient(object):
         return buffer.decode('utf-8')
 
     def GET(self, url, args=None):
-        code = 500
-        body = ""
+        # Reference 1
+        req_url = urlparse(url)
+        #empty path case
+        if (req_url.path == ""):
+            path = "/"
+        else:
+            path = req_url.path
+        #empty port case
+        if (req_url.port == None):
+            port = 80
+        else:
+            port = req_url.port
+        host = req_url.hostname
+        self.connect(host, port)
+        #when args is None ( no query params) and generating get request
+        if (args == None):
+            # Reference 2
+            get_req = "GET {} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n".format(path, host)
+        #handling query params and generating get request
+        else:
+            string_args="?"
+            # Reference 3
+            for key in args:
+                string_args = string_args + key + "=" + args[key] + "&"
+            arguments = string_args[:-1]
+            # Reference 2
+            get_req = "GET {}{} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n".format(path, arguments, host)
+        #sending get_req message through socket
+        self.sendall(get_req)
+        socket = self.socket
+        #receing server message
+        server_message = self.recvall(socket)
+        self.close()
+
+        #retrieving code and body from server message
+        code = self.get_code(server_message)
+        body = self.get_body(server_message)
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
-        code = 500
-        body = ""
+        # Reference 1
+        req_url = urlparse(url)
+        #empty path case
+        if (req_url.path == ""):
+            path = "/"
+        else:
+            path = req_url.path
+        #empty port case
+        if (req_url.port == None):
+            port = 80
+        else:
+            port = req_url.port
+        host = req_url.hostname
+        self.connect(host, port)
+        #when args is None (no post body) and generating post request
+        if (args == None):
+            # Reference 4
+            post_req = "POST {} HTTP/1.1\r\nHost: {}\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".format(path, host)
+        #when we have the post request body in args, generating post request with it
+        else:
+            string_args = urlencode(args)
+            len_args = len(string_args)
+            # Reference 4
+            post_req = "POST {} HTTP/1.1\r\nHost: {}\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}".format(path, host, len_args, string_args)
+        #sending get_req message through socket
+        self.sendall(post_req)
+        socket = self.socket
+        #receing server message
+        server_message = self.recvall(socket)
+        self.close()
+
+        #retrieving code and body from server message
+        code = self.get_code(server_message)
+        body = self.get_body(server_message)
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
